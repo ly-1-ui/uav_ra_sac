@@ -13,7 +13,7 @@ import os  # 操作系统接口
 import csv  # CSV文件处理
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'  # 解决OpenMP库冲突问题
 
-
+from tqdm import tqdm # 进度条库
 
 
 # evaluate_policy 函数：评估训练好的策略性能
@@ -146,6 +146,10 @@ reward_list = []  # 奖励列表
 mask_list = []  # 掩码列表（用于折扣因子）
 
 
+# <--- [新增 3] 初始化 tqdm 进度条
+pbar = tqdm(total=max_train_steps, initial=total_steps, desc="C-SAC Training", unit="step")
+
+
 # 主训练循环
 while total_steps < max_train_steps:
     ep_r_test_mean = 0.  # 测试episode奖励均值
@@ -167,6 +171,8 @@ while total_steps < max_train_steps:
             action = agent.choose_action(state)  # 使用策略选择动作
 
         total_steps += 1  # 总步数计数
+
+        pbar.update(1)  # <--- [新增 3] 每次走一步，进度条推进一步
 
         state_, reward, done, arrive_flag = env.step(action, dt)  # 执行动作，获取下一状态、奖励、结束标志
 
@@ -229,19 +235,19 @@ while total_steps < max_train_steps:
             costs_step_list.append(step_c_test)
             np.save(result_path + 'costs_step_list.npy', costs_step_list)
 
-            # 打印评估结果
-            print(
-                'train_test: {:d} uav_position: ({:.2f}, {:.2f},  {:.2f}) energy: {:.2f} distance_end_point: {:.2f} '.format(
-                    evaluate_num,
-                    env_test.uav.position[0], env_test.uav.position[1], env_test.uav.position[2],  # 无人机位置
-                    env_test.uav.energy,  # 能量
-                    env_test.uav.distance_end_point  # 到终点距离
-                ) + ' time: {:.2f} sensing: {:.2f} reward: {:.2f} cost: {:.2f}'.format(
-                    env_test.time_index,  # 时间
-                    env_test.uav.sensing_total,  # 感知总量
-                    ep_r_test,  # episode奖励
-                    ep_c_test  # episode成本
-                ))
+            # # 打印评估结果
+            # print(
+            #     'train_test: {:d} uav_position: ({:.2f}, {:.2f},  {:.2f}) energy: {:.2f} distance_end_point: {:.2f} '.format(
+            #         evaluate_num,
+            #         env_test.uav.position[0], env_test.uav.position[1], env_test.uav.position[2],  # 无人机位置
+            #         env_test.uav.energy,  # 能量
+            #         env_test.uav.distance_end_point  # 到终点距离
+            #     ) + ' time: {:.2f} sensing: {:.2f} reward: {:.2f} cost: {:.2f}'.format(
+            #         env_test.time_index,  # 时间
+            #         env_test.uav.sensing_total,  # 感知总量
+            #         ep_r_test,  # episode奖励
+            #         ep_c_test  # episode成本
+            #     ))
 
             # 保存最佳模型
             if ep_r_test > best_reward:
@@ -252,6 +258,16 @@ while total_steps < max_train_steps:
                 agent.save('step_best')
                 step_best_reward = step_r_test
 
+             # <--- [新增 3] 将最新的奖励和惩罚实时挂在进度条尾巴上
+            pbar.set_postfix({
+                'Eval': evaluate_num,
+                'Reward': f"{ep_r_test:.1f}",
+                'Cost': f"{ep_c_test:.1f}",
+                'Best': f"{best_reward:.1f}"
+            })
+
+# 训练结束，保存最终模型和缓冲区
+pbar.close()  # <--- [新增 3] 结束时关闭进度条
 
 # 训练结束，保存最终模型和缓冲区
 agent.save('last')  # 保存最新模型

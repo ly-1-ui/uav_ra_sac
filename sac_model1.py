@@ -252,9 +252,7 @@ class SAC(object):
         torch.save(self.actor.state_dict(), './SAC_model/actor_' + str(ep) + '.pth')
         torch.save(self.critic.state_dict(), './SAC_model/critic_' + str(ep) + '.pth')
         torch.save(self.critic_target.state_dict(), './SAC_model/critic_target_' + str(ep) + '.pth')
-        print("====================================")
-        print("Model has been saved...")
-        print("====================================")
+
 
     # load 方法：加载模型参数
     # 参数：
