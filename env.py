@@ -348,8 +348,9 @@ class Environment(object):
                 self.uav.position[1] > 3100 or self.uav.position[1] < 2500 or \
                 self.uav.position[2] > 200 or self.uav.position[2] < 30:
             done = 1  # 超出边界，结束
-            reward_tmp = 0  # 无奖励
-            cost += dis  # 距离作为成本
+            #--------修改越界惩罚------4
+            reward_tmp = -1000  # 禁止撞墙
+            cost += 5*dis  # 禁止坠毁
         else:
             reward_tmp = dt  # 保持在边界内给予时间奖励
         self.rewards_step['r_bound'] = reward_tmp  # 边界奖励

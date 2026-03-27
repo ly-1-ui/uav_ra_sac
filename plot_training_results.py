@@ -57,7 +57,7 @@ def plot_convergence(result_path='./'):
     ax2.legend()
 
     plt.tight_layout()
-    plt.savefig('Convergence_Curves.png', dpi=300)
+    plt.savefig('Convergence_Curves_1.png', dpi=300)
     plt.show()
 
 def evaluate_and_plot_best_model():
@@ -133,7 +133,7 @@ def evaluate_and_plot_best_model():
         dist_s = np.linalg.norm(pos - tar_pos)
         rate_c = np.log2(1 + gain_c * 1e8 / (dist_c**2 + 1))
         rate_s = np.log2(1 + gain_s * 1e9 / (dist_s**4 + 1))
-        rho = max(0, min(1, (rate_c - 8) / (rate_c + rate_s + 1e-6) if rate_c > 8 else 0))
+        rho = max(0, min(1, (rate_c - 2) / (rate_c + rate_s + 1e-6) if rate_c > 2 else 0))
         
         # 累积 MI
         cum_mi += rho * rate_s * 1.0 # dt = 1.0
@@ -174,7 +174,7 @@ def evaluate_and_plot_best_model():
     ax.set_xlabel('X (m)'); ax.set_ylabel('Y (m)'); ax.set_zlabel('Z (m)')
     ax.set_title('3D UAV Trajectory with RA-ULA Beam Snapshots')
     ax.legend()
-    plt.savefig('3D_Trajectory_Beam.png', dpi=300)
+    plt.savefig('3D_Trajectory_Beam_1.png', dpi=300)
     plt.show()
 
     # 图 2: 实时速率与时间分配占比曲线 (双 Y 轴)
@@ -192,7 +192,7 @@ def evaluate_and_plot_best_model():
     
     fig.legend(loc='upper right', bbox_to_anchor=(0.9, 0.9))
     plt.title('Real-time ISAC Rate & Time Allocation Ratio')
-    plt.savefig('Realtime_Rate_Rho.png', dpi=300)
+    plt.savefig('Realtime_Rate_Rho_1.png', dpi=300)
     plt.show()
 
     # 图 3: 累计感知互信息量 (Cumulative MI)
@@ -204,7 +204,7 @@ def evaluate_and_plot_best_model():
     plt.title('Cumulative Sensing Mutual Information Over Time')
     plt.grid(True, linestyle='--', alpha=0.6)
     plt.legend()
-    plt.savefig('Cumulative_MI.png', dpi=300)
+    plt.savefig('Cumulative_MI_1.png', dpi=300)
     plt.show()
 
     # 图 4: 角度解耦曲线 (机体偏航角 vs 天线相对转角 vs 目标方位)
@@ -223,7 +223,7 @@ def evaluate_and_plot_best_model():
     plt.title('Mechanical Decoupling: UAV Attitude vs. Antenna Rotation')
     plt.legend(loc='best')
     plt.grid(True, linestyle='--', alpha=0.6)
-    plt.savefig('Angle_Decoupling.png', dpi=300)
+    plt.savefig('Angle_Decoupling_1.png', dpi=300)
     plt.show()
 
 if __name__ == '__main__':
