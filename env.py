@@ -37,30 +37,36 @@ class Target(object):
     # 参数：
     #   dt: 时间步长，默认1.0
     def step(self, dt=1.):
-        # 更新x速度：添加高斯噪声，标准差为2
-        self.vx = np.random.normal(self.vx, 2)
-        # 限制x速度：不能向右移动（vx > 0），最小为vx_min
-        if self.vx > 0:
-            self.vx = 0
-        elif self.vx < self.vx_min:
-            self.vx = self.vy_min  # 这里应该是self.vx_min的笔误
-        # 更新x位置
+        # # 更新x速度：添加高斯噪声，标准差为2
+        # self.vx = np.random.normal(self.vx, 2)
+        # # 限制x速度：不能向右移动（vx > 0），最小为vx_min
+        # if self.vx > 0:
+        #     self.vx = 0
+        # elif self.vx < self.vx_min:
+        #     self.vx = self.vy_min  # 这里应该是self.vx_min的笔误
+        # # 更新x位置
+        # self.position[0] += self.vx * dt
+
+        # last_y = self.position[1]  # 保存上一时刻的y位置
+        # # 计算轨迹边界：上边界和下边界
+        # ru = 3010 + self.r * sin(0.02 * self.position[0])  # 上边界
+        # rl = 2990 + self.r * sin(0.02 * self.position[0])  # 下边界
+        # # 更新y位置：基于正弦轨迹 + 高斯噪声
+        # self.position[1] = 3000 + self.r * sin(0.02 * self.position[0]) + np.random.normal(0, 0.5)*dt
+        # # 限制y位置在边界内
+        # if self.position[1] > ru:
+        #     self.position[1] = ru
+        # elif self.position[1] < rl:
+        #     self.position[1] = rl
+
+        # # 计算y方向速度
+        # self.vy = (self.position[1] - last_y) / dt
+
+        self.vx = -10
+        self.vy = -10
+        
         self.position[0] += self.vx * dt
-
-        last_y = self.position[1]  # 保存上一时刻的y位置
-        # 计算轨迹边界：上边界和下边界
-        ru = 3010 + self.r * sin(0.02 * self.position[0])  # 上边界
-        rl = 2990 + self.r * sin(0.02 * self.position[0])  # 下边界
-        # 更新y位置：基于正弦轨迹 + 高斯噪声
-        self.position[1] = 3000 + self.r * sin(0.02 * self.position[0]) + np.random.normal(0, 0.5)*dt
-        # 限制y位置在边界内
-        if self.position[1] > ru:
-            self.position[1] = ru
-        elif self.position[1] < rl:
-            self.position[1] = rl
-
-        # 计算y方向速度
-        self.vy = (self.position[1] - last_y) / dt
+        self.position[1] += self.vy * dt
 
     # step_velocity 方法：使用指定速度更新目标位置
     # 参数：
@@ -156,8 +162,8 @@ class Uav(object):
         #-----------------------------------2
 
         #--------------添加天线阵列-----1
-        self.phi_max = np.pi / 2  # 相对机头最大偏转角 90 度
-        self.dot_phi_max = 2.0    # 最大角速度 2 rad/s
+        self.phi_max = np.pi   # 相对机头最大偏转角 90 度
+        self.dot_phi_max = 5.0    # 最大角速度 2 rad/s
         #--------------------------1
 
         print('---------------------uav built!---------------------------')
@@ -322,17 +328,27 @@ class Environment(object):
         if self.uav.energy <= 0:
             self.uav.energy = 0.  # 能量清零
             done = 1  #  episode结束
+            reward_tmp = 0 
+            dis_cost = dis * 5  # 坠毁重罚
+            arrive_flag = 0
 
-            if arrive_flag:
-                reward_tmp = 500 / (1 + dis * 0.3) + self.uav.sensing_total  # 到达奖励 + 感知总量奖励
-                dis_cost = 0
-            else:
-                reward_tmp = 0  # 未到达无奖励
-                dis_cost = dis  # 距离作为成本
+        # 2. 提前到达终点，立刻通关
+        elif dis <= 20.0:
+            arrive_flag = 1
+            done = 1  # 到达立刻结束回合
+            dis_cost = 0
+            
+            # 巨额通关奖励 + 剩余电量折算奖金+ 累计感知奖励
+            # 剩余能量越多，奖励越大
+            energy_bonus = self.uav.energy * 10.0  
+            reward_tmp = 1000.0 + energy_bonus + self.uav.sensing_total*5
+            
+        # 3. 还在飞行途中
         else:
-            done = 0  # 未结束
-            reward_tmp = 0  # 无奖励
-            dis_cost = 0  # 无距离成本
+            arrive_flag = 0
+            done = 0
+            reward_tmp = 0
+            dis_cost = 0
 
         cost += dis_cost  # 累加距离成本
         self.rewards_step['r_arrive'] = reward_tmp  # 到达奖励

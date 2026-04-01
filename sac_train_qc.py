@@ -63,7 +63,7 @@ init_energy = 30.  # 初始能量
 # # 无人机初始状态：[x, y, z, vx, vy, vz, phi, theta, psi, p, q, r, dot_phi, energy]
 
 #---------- uav_init_state 从 14 维扩展为 16 维 (追加 phi=0, dot_phi=0)----1
-uav_init_state = np.array([500., 2600., 100., 0., 0., 0., 0., 0., 0., 1., 0., 0., 0., init_energy, 0., 0.])
+uav_init_state = np.array([500., 2600., 100., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1., init_energy, 0., 0.])
 
 #--------------------1
 

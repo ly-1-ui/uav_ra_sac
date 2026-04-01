@@ -35,7 +35,7 @@ model_config = {
 
 train_config = {
     'batch_size': 256,
-    'max_train_steps': 4e6,
+    'max_train_steps': 2e6,
     'learning_rate': 3e-4,
     'update_interval': 16,
     'gamma': 0.99,

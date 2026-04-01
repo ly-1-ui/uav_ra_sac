@@ -57,7 +57,7 @@ def plot_convergence(result_path='./'):
     ax2.legend()
 
     plt.tight_layout()
-    plt.savefig('Convergence_Curves_1.png', dpi=300)
+    plt.savefig('Convergence_Curves.png', dpi=300)
     plt.show()
 
 def evaluate_and_plot_best_model():
@@ -67,8 +67,8 @@ def evaluate_and_plot_best_model():
     print("加载最佳模型并开始采集物理遥测数据...")
     
     # 1. 环境与智能体初始化
-    init_energy = 30.
-    uav_init_state = np.array([500., 2600., 100., 0., 0., 0., 0., 0., 0., 1., 0., 0., 0., init_energy, 0., 0.])
+    init_energy = 40.
+    uav_init_state = np.array([500., 2600., 100., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1., init_energy, 0., 0.])
     uav_target_position = np.array([0., 2600., 100.])
     target_position_1 = np.array([500., 3000., 0.])
     
@@ -81,7 +81,8 @@ def evaluate_and_plot_best_model():
     
     # 加载最佳模型
     try:
-        agent.load('best')
+        agent.load('last')  # 加载最佳模型
+        
     except Exception as e:
         print(f"加载模型失败: {e}。请确保 SAC_model 文件夹下有 actor_best.pth")
         return
@@ -174,7 +175,7 @@ def evaluate_and_plot_best_model():
     ax.set_xlabel('X (m)'); ax.set_ylabel('Y (m)'); ax.set_zlabel('Z (m)')
     ax.set_title('3D UAV Trajectory with RA-ULA Beam Snapshots')
     ax.legend()
-    plt.savefig('3D_Trajectory_Beam_1.png', dpi=300)
+    plt.savefig('3D_Trajectory_Beam.png', dpi=300)
     plt.show()
 
     # 图 2: 实时速率与时间分配占比曲线 (双 Y 轴)
@@ -192,7 +193,7 @@ def evaluate_and_plot_best_model():
     
     fig.legend(loc='upper right', bbox_to_anchor=(0.9, 0.9))
     plt.title('Real-time ISAC Rate & Time Allocation Ratio')
-    plt.savefig('Realtime_Rate_Rho_1.png', dpi=300)
+    plt.savefig('Realtime_Rate_Rho.png', dpi=300)
     plt.show()
 
     # 图 3: 累计感知互信息量 (Cumulative MI)
@@ -204,7 +205,7 @@ def evaluate_and_plot_best_model():
     plt.title('Cumulative Sensing Mutual Information Over Time')
     plt.grid(True, linestyle='--', alpha=0.6)
     plt.legend()
-    plt.savefig('Cumulative_MI_1.png', dpi=300)
+    plt.savefig('Cumulative_MI.png', dpi=300)
     plt.show()
 
     # 图 4: 角度解耦曲线 (机体偏航角 vs 天线相对转角 vs 目标方位)
@@ -215,15 +216,15 @@ def evaluate_and_plot_best_model():
     plt.plot(logs['time'], logs['theta_tar'], label='Target Direction ($\\theta_{tar}$)', color='black', linestyle=':')
     
     # 标出天线机械限位 (假设设定为 +-90度)
-    plt.axhline(y=90, color='gray', linestyle='--', alpha=0.5, label='Mechanical Limit $\pm\phi_{max}$')
-    plt.axhline(y=-90, color='gray', linestyle='--', alpha=0.5)
+    plt.axhline(y=180, color='gray', linestyle='--', alpha=0.5, label='Mechanical Limit $\pm\phi_{max}$')
+    plt.axhline(y=-180, color='gray', linestyle='--', alpha=0.5)
     
     plt.xlabel('Flight Time (s)')
     plt.ylabel('Angle (Degrees)')
     plt.title('Mechanical Decoupling: UAV Attitude vs. Antenna Rotation')
     plt.legend(loc='best')
     plt.grid(True, linestyle='--', alpha=0.6)
-    plt.savefig('Angle_Decoupling_1.png', dpi=300)
+    plt.savefig('Angle_Decoupling.png', dpi=300)
     plt.show()
 
 if __name__ == '__main__':
