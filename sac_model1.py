@@ -1,6 +1,7 @@
 # sac_model1.py - SAC (Soft Actor-Critic) 算法实现
 # 该文件实现了软演员-评论家算法，用于连续动作空间的强化学习
 # 主要包含策略网络(Actor)、价值网络(Critic)和SAC算法主体
+#！！！更改有/无旋转：class SAC(object): MODEL_DIR = 'SAC_model'处切换路径
 
 import torch  # PyTorch深度学习框架
 import torch.nn as nn  # 神经网络模块
@@ -15,6 +16,8 @@ from buffer import ReplayBuffer  # 经验回放缓冲区
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 from config import parser  # 导入配置解析器
 args = parser.parse_args()  # 解析命令行参数
+
+
 
 # Actor 类：策略网络（Policy Network）
 # 作用：学习确定性策略，使用高斯分布建模动作的概率分布
@@ -139,6 +142,7 @@ class Critic(nn.Module):
 # SAC 类：Soft Actor-Critic 算法主体
 # 作用：实现完整的SAC算法，包括训练和推理
 class SAC(object):
+    MODEL_DIR = 'SAC_model'
     # 初始化方法：设置算法参数和网络
     # 参数：
     #   state_dim: 状态维度
@@ -249,18 +253,14 @@ class SAC(object):
     # 参数：
     #   ep: 训练轮数
     def save(self, ep):
-        torch.save(self.actor.state_dict(), './SAC_model/actor_' + str(ep) + '.pth')
-        torch.save(self.critic.state_dict(), './SAC_model/critic_' + str(ep) + '.pth')
-        torch.save(self.critic_target.state_dict(), './SAC_model/critic_target_' + str(ep) + '.pth')
+        torch.save(self.actor.state_dict(),         f'./{self.MODEL_DIR}/actor_{ep}.pth')
+        torch.save(self.critic.state_dict(),        f'./{self.MODEL_DIR}/critic_{ep}.pth')
+        torch.save(self.critic_target.state_dict(), f'./{self.MODEL_DIR}/critic_target_{ep}.pth')
 
-
-    # load 方法：加载模型参数
-    # 参数：
-    #   ep: 训练轮数
     def load(self, ep):
-        self.actor.load_state_dict(torch.load('./SAC_model/actor_' + str(ep) + '.pth'))
-        self.critic.load_state_dict(torch.load('./SAC_model/critic_' + str(ep) + '.pth'))
-        self.critic_target.load_state_dict(torch.load('./SAC_model/critic_target_' + str(ep) + '.pth'))
+        self.actor.load_state_dict(torch.load(f'./{self.MODEL_DIR}/actor_{ep}.pth', weights_only=True))
+        self.critic.load_state_dict(torch.load(f'./{self.MODEL_DIR}/critic_{ep}.pth', weights_only=True))
+        self.critic_target.load_state_dict(torch.load(f'./{self.MODEL_DIR}/critic_target_{ep}.pth', weights_only=True))
         print("====================================")
         print("model has been loaded...")
         print("====================================")

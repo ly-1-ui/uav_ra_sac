@@ -1,6 +1,7 @@
 # sac_train_qc.py - SAC算法训练脚本
 # 该文件实现了Soft Actor-Critic (SAC) 算法的训练过程，用于训练无人机在复杂环境中执行目标跟踪和到达任务
 # 包含环境交互、经验收集、策略学习和性能评估
+#！！！更改有/无旋转：修改"path = './' "处的路径更改保存路径
 
 import sys  # 系统相关功能
 from itertools import count  # 迭代计数器
@@ -15,6 +16,8 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'  # 解决OpenMP库冲突问题
 
 from tqdm import tqdm # 进度条库
 
+#保存路径
+path = './SAC_model/' 
 
 # evaluate_policy 函数：评估训练好的策略性能
 # 参数：
@@ -53,24 +56,27 @@ def evaluate_policy(env, agent, iter_num):
 # 训练配置
 # continue_train = True  # 是否继续训练（从检查点恢复）
 continue_train = False  # 从头开始训练
-result_path = './'  # 结果保存路径
-buffer_path = './'  # 缓冲区保存路径
-csv_file_path = './'  # CSV文件路径
+
+result_path = path  # 结果保存路径
+buffer_path = path  # 缓冲区保存路径
+csv_file_path = path  # CSV文件路径
 
 # 环境参数
-init_energy = 30.  # 初始能量
+init_energy = 60.  # 初始能量
 # uav_init_state = np.array([500., 2600., 100., 0., 0., 0., 0., 0., 0., 1., 0., 0., 0., init_energy])
 # # 无人机初始状态：[x, y, z, vx, vy, vz, phi, theta, psi, p, q, r, dot_phi, energy]
 
 #---------- uav_init_state 从 14 维扩展为 16 维 (追加 phi=0, dot_phi=0)----1
-uav_init_state = np.array([500., 2600., 100., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1., init_energy, 0., 0.])
-
+# uav_init_state = np.array([500., 2600., 100., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1., init_energy, 0., 0.])
+uav_init_state = np.array([500., 2500., 100., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1., init_energy, 0., 0.])
 #--------------------1
 
 
-uav_target_position = np.array([0., 2600., 100.])  # 无人机目标终点位置
+# uav_target_position = np.array([0., 2600., 100.])  # 无人机目标终点位置
+uav_target_position = np.array([0., 2500., 100.]) 
 # target_position_0 = np.array([250., 3000., 0.])  # 备用目标位置
-target_position_1 = np.array([500., 3000., 0.])  # 目标初始位置
+# target_position_1 = np.array([500., 3000., 0.])  # 目标初始位置
+target_position_1 = np.array([250., 3000., 0.])  
 
 target_velocity = 0.  # 目标速度
 target_model = 0  # 目标模型

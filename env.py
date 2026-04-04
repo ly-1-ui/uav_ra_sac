@@ -1,6 +1,7 @@
 # env.py - 强化学习环境文件
 # 该文件定义了无人机跟踪目标的仿真环境，包括目标(Target)、无人机(Uav)和环境(Environment)类
 # 用于 SAC (Soft Actor-Critic) 算法的训练和测试
+#！！！更改有/无旋转：Class UAV def step处修改第五个控制量（tau_a 力矩）
 
 from utils import *  # 导入工具函数
 from config import *  # 导入配置文件
@@ -23,7 +24,7 @@ class Target(object):
         self.vy_min, self.vy_max = -10, 10  # y速度范围：-10到10
         self.r = 10  # 轨迹振幅参数
         # 初始化y位置为正弦波轨迹：y = 3000 + r * sin(0.02 * x)
-        self.position[1] = 3000 + self.r * sin(0.02 * self.position[0])
+        self.position[1] = 2700 + self.r * sin(0.02 * self.position[0])
         self.init_position = self.position  # 保存初始位置用于重置
 
         # 计算速度范围的尺度，用于归一化
@@ -43,16 +44,16 @@ class Target(object):
         # if self.vx > 0:
         #     self.vx = 0
         # elif self.vx < self.vx_min:
-        #     self.vx = self.vy_min  # 这里应该是self.vx_min的笔误
+        #     self.vx = self.vx_min  
         # # 更新x位置
         # self.position[0] += self.vx * dt
 
         # last_y = self.position[1]  # 保存上一时刻的y位置
         # # 计算轨迹边界：上边界和下边界
-        # ru = 3010 + self.r * sin(0.02 * self.position[0])  # 上边界
-        # rl = 2990 + self.r * sin(0.02 * self.position[0])  # 下边界
+        # ru = 2410 + self.r * sin(0.02 * self.position[0])  # 上边界
+        # rl = 2390 + self.r * sin(0.02 * self.position[0])  # 下边界
         # # 更新y位置：基于正弦轨迹 + 高斯噪声
-        # self.position[1] = 3000 + self.r * sin(0.02 * self.position[0]) + np.random.normal(0, 0.5)*dt
+        # self.position[1] = 2400 + self.r * sin(0.02 * self.position[0]) + np.random.normal(0, 0.5)*dt
         # # 限制y位置在边界内
         # if self.position[1] > ru:
         #     self.position[1] = ru
@@ -62,8 +63,8 @@ class Target(object):
         # # 计算y方向速度
         # self.vy = (self.position[1] - last_y) / dt
 
-        self.vx = -10
-        self.vy = -10
+        self.vx = -8
+        self.vy = 0
         
         self.position[0] += self.vx * dt
         self.position[1] += self.vy * dt
@@ -185,6 +186,7 @@ class Uav(object):
 
         #---------加入第五个控制量----1
         u5 = 0.01 * control[4]     # tau_a 力矩
+        # u5=0
         u = [u1, u2, u3, u4,u5]  # 控制向量
         #-----------------------1
 
@@ -318,107 +320,227 @@ class Environment(object):
         dis = dist(self.uav.position, self.uav.end_point)  # 到终点距离
         dis_target = dist(self.uav.position, self.target.position)  # 到目标距离
 
-        # 判断是否到达终点（距离小于20）
-        if dis <= 20.:
-            arrive_flag = 1  # 已到达
-        else:
-            arrive_flag = 0  # 未到达
+        # # 判断是否到达终点（距离小于20）
+        # if dis <= 20.:
+        #     arrive_flag = 1  # 已到达
+        # else:
+        #     arrive_flag = 0  # 未到达
 
-        # 根据能量和到达状态计算奖励
+        # # 根据能量和到达状态计算奖励
+        # if self.uav.energy <= 0:
+        #     self.uav.energy = 0.  # 能量清零
+        #     done = 1  #  episode结束
+        #     reward_tmp = 0 
+        #     dis_cost = dis * 5  # 坠毁重罚
+        #     arrive_flag = 0
+
+        # # 2. 提前到达终点，立刻通关
+        # elif dis <= 20.0:
+        #     arrive_flag = 1
+        #     done = 1  # 到达立刻结束回合
+        #     dis_cost = 0
+            
+        #     # 巨额通关奖励 + 剩余电量折算奖金+ 累计感知奖励
+        #     # 剩余能量越多，奖励越大
+        #     energy_bonus = self.uav.energy * 20.0  
+        #     reward_tmp = 1000.0 + energy_bonus + self.uav.sensing_total*5
+            
+        # # 3. 还在飞行途中
+        # else:
+        #     arrive_flag = 0
+        #     done = 0
+        #     reward_tmp = 0
+        #     dis_cost = 0
+
+        # cost += dis_cost  # 累加距离成本
+        # self.rewards_step['r_arrive'] = reward_tmp  # 到达奖励
+        # self.rewards_step['c_arrive'] = dis  # 到达成本
+        # reward += reward_tmp  # 累加奖励
+
+        # # 检查高度约束
+        # if self.uav.position[2] < 60:
+        #     height_con = 1  # 高度过低
+
+        # # 检查边界约束
+        # if self.uav.position[0] > 600 or self.uav.position[0] < -300 or \
+        #         self.uav.position[1] > 3100 or self.uav.position[1] < 2500 or \
+        #         self.uav.position[2] > 200 or self.uav.position[2] < 30:
+        #     done = 1  # 超出边界，结束
+        #     #--------修改越界惩罚------4
+        #     reward_tmp = -1000  # 禁止撞墙
+        #     cost += 5*dis  # 禁止坠毁
+        # else:
+        #     reward_tmp = dt  # 保持在边界内给予时间奖励
+        # self.rewards_step['r_bound'] = reward_tmp  # 边界奖励
+        # reward += reward_tmp  # 累加奖励
+
+        # # 检查通信约束
+        # if self.uav.video_rate*dt > self.uav.com_rate:
+        #     cost_tmp = (self.uav.video_rate * dt - self.uav.com_rate)  # 通信不足的成本
+        #     reward_tmp = 0.  # 无奖励
+        #     commun_con = 1  # 通信约束违反
+        # else:
+        #     cost_tmp = 0.  # 无成本
+        #     reward_tmp = self.uav.sen_rate  # 感知速率作为奖励
+        # self.rewards_step['r_rate'] = reward_tmp  # 速率奖励
+        # self.rewards_step['c_rate'] = cost_tmp  # 速率成本
+        # reward += reward_tmp  # 累加奖励
+        # cost += cost_tmp  # 累加成本
+
+        # #--------检查天线旋转机械约束----1
+        # phi_current = self.uav.state[14]
+        # if abs(phi_current) > self.uav.phi_max:
+        #     cost_tmp = abs(phi_current) - self.uav.phi_max
+        #     reward_tmp = 0.
+        # else:
+        #     cost_tmp = 0.
+        #     reward_tmp = dt * 0.1 # 安全范围内给个极小奖励
+            
+        # self.rewards_step['r_phi'] = reward_tmp
+        # self.rewards_step['c_phi'] = cost_tmp
+        # reward += reward_tmp
+        # cost += cost_tmp
+        # #----------------------------1
+
+        # # 能量相关奖励
+        # if self.uav.energy < 15:
+        #     reward_tmp = max(last_dis - dis, 0)  # 能量低时，接近终点给予奖励
+        # else:
+        #     reward_tmp = max(last_dis_target - dis_target, 0)  # 能量充足时，接近目标给予奖励
+        # self.rewards_step['r_energy'] = reward_tmp  # 能量奖励
+        # reward += reward_tmp  # 累加奖励
+
+        # # 记录总奖励和成本
+        # self.rewards_step['r_all'] = reward
+        # self.rewards_step['c_all'] = cost
+
+        # self.uav.distance_end_point = dis  # 更新无人机到终点距离
+
+        # state_ = self.observation_state()  # 获取观测状态
+
+        # info = {'cost': cost, 'arrive_flag': arrive_flag,
+        #         'height_con': height_con, 'commun_con': commun_con}  # 返回额外信息
+        # return state_, [reward, cost], done, info
+
+        # =====================================================================
+        # 1. 终局判定与通关奖励 (Terminal Conditions & Rewards)
+        # =====================================================================
         if self.uav.energy <= 0:
-            self.uav.energy = 0.  # 能量清零
-            done = 1  #  episode结束
+            # 没电坠毁
+            self.uav.energy = 0.  
+            done = 1  
             reward_tmp = 0 
-            dis_cost = dis * 5  # 坠毁重罚
+            dis_cost = dis * 5.0  # 距离终点越远，坠毁惩罚越大
             arrive_flag = 0
 
-        # 2. 提前到达终点，立刻通关
         elif dis <= 20.0:
+            # 成功抵达终点！
             arrive_flag = 1
-            done = 1  # 到达立刻结束回合
+            done = 1  # 抵达即立刻结束！
             dis_cost = 0
             
-            # 巨额通关奖励 + 剩余电量折算奖金+ 累计感知奖励
-            # 剩余能量越多，奖励越大
-            energy_bonus = self.uav.energy * 10.0  
-            reward_tmp = 1000.0 + energy_bonus + self.uav.sensing_total*5
+            # 【重塑价值观】：大幅削弱剩余电量奖金，暴增感知累计奖金！
+            # 让它明白：当个满电的快递员不值钱，带回海量的感知数据才是王者。
+            energy_bonus = self.uav.energy * 5.0         # 剩余电量奖金（倍率降到2）
+            sensing_bonus = self.uav.sensing_total * 30.0 # 感知总数据奖金（倍率飙到20）
+            reward_tmp = 1000.0 + energy_bonus + sensing_bonus
             
-        # 3. 还在飞行途中
         else:
+            # 还在安全飞行中
             arrive_flag = 0
             done = 0
             reward_tmp = 0
             dis_cost = 0
 
-        cost += dis_cost  # 累加距离成本
-        self.rewards_step['r_arrive'] = reward_tmp  # 到达奖励
-        self.rewards_step['c_arrive'] = dis  # 到达成本
-        reward += reward_tmp  # 累加奖励
+        cost += dis_cost  
+        self.rewards_step['r_arrive'] = reward_tmp  
+        self.rewards_step['c_arrive'] = dis_cost  
+        reward += reward_tmp  
 
-        # 检查高度约束
+        # =====================================================================
+        # 2. 物理与安全约束惩罚 (Physical Constraints & Penalties)
+        # =====================================================================
+        # 检查高度
         if self.uav.position[2] < 60:
-            height_con = 1  # 高度过低
+            height_con = 1  
 
-        # 检查边界约束
+        # 检查越界 (如果越界，直接坠毁重罚)
         if self.uav.position[0] > 600 or self.uav.position[0] < -300 or \
-                self.uav.position[1] > 3100 or self.uav.position[1] < 2500 or \
+                self.uav.position[1] > 3100 or self.uav.position[1] < 1500 or \
                 self.uav.position[2] > 200 or self.uav.position[2] < 30:
-            done = 1  # 超出边界，结束
-            #--------修改越界惩罚------4
-            reward_tmp = -1000  # 禁止撞墙
-            cost += 5*dis  # 禁止坠毁
+            done = 1  
+            reward_tmp = -1000.0  # 撞墙直接给暴击惩罚
+            cost += dis * 5.0     
         else:
-            reward_tmp = dt  # 保持在边界内给予时间奖励
-        self.rewards_step['r_bound'] = reward_tmp  # 边界奖励
-        reward += reward_tmp  # 累加奖励
+            reward_tmp = dt  # 存活一秒给一点基础奖励
+        self.rewards_step['r_bound'] = reward_tmp  
+        reward += reward_tmp  
 
-        # 检查通信约束
-        if self.uav.video_rate*dt > self.uav.com_rate:
-            cost_tmp = (self.uav.video_rate * dt - self.uav.com_rate)  # 通信不足的成本
-            reward_tmp = 0.  # 无奖励
-            commun_con = 1  # 通信约束违反
+        # 检查通信底线 (注意这里的 0.5 要和 utils.py 里的 rho 门槛对齐)
+        if 0.5 * dt > self.uav.com_rate:
+            cost_tmp = (0.5 * dt - self.uav.com_rate) * 10.0 # 通信断连惩罚
+            reward_tmp = 0.  
+            commun_con = 1  
         else:
-            cost_tmp = 0.  # 无成本
-            reward_tmp = self.uav.sen_rate  # 感知速率作为奖励
-        self.rewards_step['r_rate'] = reward_tmp  # 速率奖励
-        self.rewards_step['c_rate'] = cost_tmp  # 速率成本
-        reward += reward_tmp  # 累加奖励
-        cost += cost_tmp  # 累加成本
+            cost_tmp = 0.  
+            reward_tmp = self.uav.sen_rate * 2.0  # 日常奖励实时感知速率
+        self.rewards_step['r_rate'] = reward_tmp  
+        self.rewards_step['c_rate'] = cost_tmp  
+        reward += reward_tmp  
+        cost += cost_tmp  
 
-        #--------检查天线旋转机械约束----1
+        # 检查天线机械限位 (超限受罚)
         phi_current = self.uav.state[14]
         if abs(phi_current) > self.uav.phi_max:
-            cost_tmp = abs(phi_current) - self.uav.phi_max
+            cost_tmp = (abs(phi_current) - self.uav.phi_max) * 5.0
             reward_tmp = 0.
         else:
             cost_tmp = 0.
-            reward_tmp = dt * 0.1 # 安全范围内给个极小奖励
+            reward_tmp = dt * 0.1 
             
         self.rewards_step['r_phi'] = reward_tmp
         self.rewards_step['c_phi'] = cost_tmp
         reward += reward_tmp
         cost += cost_tmp
-        #----------------------------1
 
-        # 能量相关奖励
-        if self.uav.energy < 15:
-            reward_tmp = max(last_dis - dis, 0)  # 能量低时，接近终点给予奖励
+        # =====================================================================
+        # 3. 【核心新增】两阶段行为引导 (Two-Phase Tracking & Returning)
+        # =====================================================================
+        # 假设初始总能量为 40 左右。设定电量告急阈值为 15.0
+        # Phase 1: 电量充足时（>15），忽略终点，死死咬住目标！
+        if self.uav.energy > 15.0:
+            # (last_dis_target - dis_target) 为正代表正在靠近目标
+            # 乘以 3.0 的强烈系数，逼迫它向目标飞去
+            reward_guide = (last_dis_target - dis_target) * 3.0
+            
+        # Phase 2: 电量告急时（<=15），放弃目标，全速向终点返航！
         else:
-            reward_tmp = max(last_dis_target - dis_target, 0)  # 能量充足时，接近目标给予奖励
-        self.rewards_step['r_energy'] = reward_tmp  # 能量奖励
-        reward += reward_tmp  # 累加奖励
+            # (last_dis - dis) 为正代表正在靠近终点
+            # 乘以 5.0 的极强系数，保命要紧，逼迫它赶紧回家
+            reward_guide = (last_dis - dis) * 5.0
+            
+        self.rewards_step['r_energy'] = reward_guide  
+        reward += reward_guide  
 
-        # 记录总奖励和成本
+        # =====================================================================
+        # 4. 【核心新增】机身平滑飞行惩罚 (Smoothness Penalty)
+        # =====================================================================
+        # 提取机身的滚转(p)、俯仰(q)、偏航(r)角速度
+        p, q, r_yaw = self.uav.state[6], self.uav.state[7], self.uav.state[8]
+        angular_velocity_penalty = abs(p) + abs(q) + abs(r_yaw)
+        
+        # 施加平滑惩罚：机身扭动越剧烈，扣分越狠！
+        # 这将完美凸显 RA-ULA (只需转天线，机身平稳) 相比 Fixed-ULA (机身疯狂扭动) 的降维打击优势！
+        r_smooth = -0.5 * angular_velocity_penalty
+        reward += r_smooth
+
         self.rewards_step['r_all'] = reward
         self.rewards_step['c_all'] = cost
+        self.uav.distance_end_point = dis  
 
-        self.uav.distance_end_point = dis  # 更新无人机到终点距离
-
-        state_ = self.observation_state()  # 获取观测状态
-
-        info = {'cost': cost, 'arrive_flag': arrive_flag,
-                'height_con': height_con, 'commun_con': commun_con}  # 返回额外信息
-        return state_, [reward, cost], done, info
+        state_ = self.observation_state()  
+        info = {'cost': cost, 'arrive_flag': arrive_flag, 'height_con': height_con, 'commun_con': commun_con}  
+        return state_,[reward, cost], done, info
 
     # reset 方法：重置环境到初始状态
     def reset(self):

@@ -31,7 +31,7 @@ k1 = (Ixy - Iz) / Ixy
 k2 = (Iz - Ixy) / Ixy
 
 #---------- 新增 RA 物理参数 -----------1
-M=8             # ULA阵元数量
+M=4             # ULA阵元数量
 Ja = 0.05      # 天线阵列转动惯量
 da = 0.01      # 天线转动阻尼系数
 eta_a = 0.8    # 旋转电机效率
@@ -203,8 +203,8 @@ def uavfun(x, t, u, target_position, bs_position):
     rate2 = log2(1 + (gain_s * lambda2) / target_dist ** 4)
     
     # 将原本死板的 8.0 阈值降低到 2.0（或更低），让 rho 能够大于 0
-    if rate1 > 2.0:
-        pho = (rate1 - 2.0) / (rate1 + rate2)
+    if rate1 > 0.5:
+        pho = (rate1 - 0.5) / (rate1 + rate2)
     else:
         pho = 0
     #--------------------------------2
@@ -229,7 +229,9 @@ def uavfun(x, t, u, target_position, bs_position):
 
 
 def uavint(state, target_position, control, dt):
-    bs_position = [0, 0, 30]
+    # bs_position = [0, 0, 30]
+    bs_position = np.array([0., 2000., 30.])
+
     t = np.linspace(0, dt, 10)
     # y = odeint(uavfun, np.append(state, [0, 0, 0, 0]), t, args=(control, target_position, bs_position))
     
