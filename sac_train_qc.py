@@ -17,7 +17,7 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'  # 解决OpenMP库冲突问题
 from tqdm import tqdm # 进度条库
 
 #保存路径
-path = './SAC_model/' 
+path = './SAC_model_n/' 
 
 # evaluate_policy 函数：评估训练好的策略性能
 # 参数：
@@ -62,21 +62,21 @@ buffer_path = path  # 缓冲区保存路径
 csv_file_path = path  # CSV文件路径
 
 # 环境参数
-init_energy = 60.  # 初始能量
+init_energy = 80.  # 初始能量
 # uav_init_state = np.array([500., 2600., 100., 0., 0., 0., 0., 0., 0., 1., 0., 0., 0., init_energy])
 # # 无人机初始状态：[x, y, z, vx, vy, vz, phi, theta, psi, p, q, r, dot_phi, energy]
 
 #---------- uav_init_state 从 14 维扩展为 16 维 (追加 phi=0, dot_phi=0)----1
 # uav_init_state = np.array([500., 2600., 100., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1., init_energy, 0., 0.])
-uav_init_state = np.array([500., 2500., 100., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1., init_energy, 0., 0.])
+uav_init_state = np.array([500., 2000., 100., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1., init_energy, 0., 0.])
 #--------------------1
 
 
 # uav_target_position = np.array([0., 2600., 100.])  # 无人机目标终点位置
-uav_target_position = np.array([0., 2500., 100.]) 
+uav_target_position = np.array([0., 2000., 100.]) 
 # target_position_0 = np.array([250., 3000., 0.])  # 备用目标位置
 # target_position_1 = np.array([500., 3000., 0.])  # 目标初始位置
-target_position_1 = np.array([250., 3000., 0.])  
+target_position_1 = np.array([500., 3000., 0.])  
 
 target_velocity = 0.  # 目标速度
 target_model = 0  # 目标模型

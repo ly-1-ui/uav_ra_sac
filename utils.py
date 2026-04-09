@@ -193,21 +193,42 @@ def uavfun(x, t, u, target_position, bs_position):
     # else:
     #     pho = 0
 
-    #------平滑梯度版波束增益-------------2
-    # 将 max(0, cos) 改为 (cos + 1)/2，这样即使在背面，RL也能感知到微弱的梯度指引它转过来！
-    gain_c = M * ((np.cos(theta_c - theta_RA_abs) + 1.0) / 2.0)**2
-    gain_s = M * ((np.cos(theta_s - theta_RA_abs) + 1.0) / 2.0)**2
+    # #------平滑梯度版波束增益-------------2
+    # # 将 max(0, cos) 改为 (cos + 1)/2，这样即使在背面，RL也能感知到微弱的梯度指引它转过来！
+    # gain_c = M * ((np.cos(theta_c - theta_RA_abs) + 1.0) / 2.0)**2
+    # gain_s = M * ((np.cos(theta_s - theta_RA_abs) + 1.0) / 2.0)**2
 
     # === 修改为 (降低阈值) ===
+    # rate1 = log2(1 + (gain_c * lambda1) / bs_dist ** 2)
+    # rate2 = log2(1 + (gain_s * lambda2) / target_dist ** 4)
+    
+    # # 将原本死板的 8.0 阈值降低到 2.0（或更低），让 rho 能够大于 0
+    # if rate1 > 0.5:
+    #     pho = (rate1 - 0.5) / (rate1 + rate2)
+    # else:
+    #     pho = 0
+    # #--------------------------------2
+
+    # # ✅ 修改后（硬截断，侧向真正为零）
+    # gain_c = M * max(0, np.cos(theta_c - theta_RA_abs))**2
+    # gain_s = M * max(0, np.cos(theta_s - theta_RA_abs))**2
+
+    # 要求夹角必须小于 60度 (cos(60)=0.5) 才有信号，否则切断！
+    cos_c = np.cos(theta_c - theta_RA_abs)
+    gain_c = M * (cos_c**2 if cos_c > 0.5 else 0.01)
+
+    cos_s = np.cos(theta_s - theta_RA_abs)
+    gain_s = M * (cos_s**2 if cos_s > 0.5 else 0.01)
+
     rate1 = log2(1 + (gain_c * lambda1) / bs_dist ** 2)
     rate2 = log2(1 + (gain_s * lambda2) / target_dist ** 4)
-    
-    # 将原本死板的 8.0 阈值降低到 2.0（或更低），让 rho 能够大于 0
-    if rate1 > 0.5:
-        pho = (rate1 - 0.5) / (rate1 + rate2)
+    if rate1 > 2.0:
+        pho = (rate1 - 2.0) / (rate1 + rate2)
     else:
         pho = 0
-    #--------------------------------2
+
+
+
 
     # 5.[MODIFIED] 能耗计算包含无人机推进与天线机械旋转能耗
     P_uav = uav_power(omega_uav)

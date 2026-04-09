@@ -59,21 +59,21 @@ def plot_convergence(result_path='./SAC_model/'):
     ax2.legend()
 
     plt.tight_layout()
-    plt.savefig('Convergence_Curves_1.png', dpi=300)
+    plt.savefig(f'{result_path}Convergence_Curves.png', dpi=300)
     plt.show()
 
-def evaluate_and_plot_best_model():
+def evaluate_and_plot_best_model(result_path='./SAC_model/'):
     """
     2. 加载最好模型并画出 3D轨迹、速率、感知MI、角度解耦等核心曲线
     """
     print("加载最佳模型并开始采集物理遥测数据...")
     
     # 1. 环境与智能体初始化
-    init_energy = 40.
+    init_energy = 80
     uav_init_state = np.array([500., 2000., 100., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1., init_energy, 0., 0.])
     uav_target_position = np.array([0., 2000., 100.]) 
 
-    target_position_1 = np.array([400., 2800., 0.])   
+    target_position_1 = np.array([500., 3000., 0.])   
 
     # 物理参数 (用于重新计算绘图数据)
     bs_pos = np.array([0., 2000., 30.])
@@ -129,17 +129,34 @@ def evaluate_and_plot_best_model():
         theta_tar = np.arctan2(tar_pos[1] - pos[1], tar_pos[0] - pos[0])
         theta_bs = np.arctan2(bs_pos[1] - pos[1], bs_pos[0] - pos[0])
         
-        # 计算瞬时信道增益 (MRT原则下的余弦衰减)
-        M = 4
-        gain_c = M * max(0, np.cos(theta_bs - theta_RA))**2
-        gain_s = M * max(0, np.cos(theta_tar - theta_RA))**2
+        # # 计算瞬时信道增益 (MRT原则下的余弦衰减)
+        # M = 4
+        # gain_c = M * max(0, np.cos(theta_bs - theta_RA))**2
+        # gain_s = M * max(0, np.cos(theta_tar - theta_RA))**2
         
-        # 近似计算当前速率与 rho (为绘图展示，采用简化公式，lambda参数适当缩放)
+        # # 近似计算当前速率与 rho (为绘图展示，采用简化公式，lambda参数适当缩放)
+        # dist_c = np.linalg.norm(pos - bs_pos)
+        # dist_s = np.linalg.norm(pos - tar_pos)
+        # rate_c = np.log2(1 + gain_c * 1e8 / (dist_c**2 + 1))
+        # rate_s = np.log2(1 + gain_s * 1e9 / (dist_s**4 + 1))
+        # rho = max(0, min(1, (rate_c - 2) / (rate_c + rate_s + 1e-6) if rate_c > 2 else 0))
+
+        # 计算瞬时信道增益 (加入严格的 60度 物理截断，和训练时保持绝对一致！)
+        M = 4
+        cos_c = np.cos(theta_bs - theta_RA)
+        gain_c = M * (cos_c**2 if cos_c > 0.5 else 0.01)
+        
+        cos_s = np.cos(theta_tar - theta_RA)
+        gain_s = M * (cos_s**2 if cos_s > 0.5 else 0.01)
+        
         dist_c = np.linalg.norm(pos - bs_pos)
         dist_s = np.linalg.norm(pos - tar_pos)
+        
+        # 稍微放大系数，抵消距离 4次方的恐怖衰减
         rate_c = np.log2(1 + gain_c * 1e8 / (dist_c**2 + 1))
-        rate_s = np.log2(1 + gain_s * 1e9 / (dist_s**4 + 1))
-        rho = max(0, min(1, (rate_c - 2) / (rate_c + rate_s + 1e-6) if rate_c > 2 else 0))
+        rate_s = np.log2(1 + gain_s * 1e11 / (dist_s**4 + 1))
+        
+        rho = max(0, min(1, (rate_c - 2.0) / (rate_c + rate_s + 1e-6) if rate_c > 2.0 else 0))
         
         # 累积 MI
         cum_mi += rho * rate_s * 1.0 # dt = 1.0
@@ -188,7 +205,7 @@ def evaluate_and_plot_best_model():
     ax.legend()
     # [新增] 锁定 3D 轴的真实物理比例，让图表不畸变
     ax.set_box_aspect([500, 1000, 200]) # 对应 X, Y, Z 的真实空间跨度比例
-    plt.savefig('3D_Trajectory_Beam_1.png', dpi=300)
+    plt.savefig(f'{result_path}3D_Trajectory_Beam.png', dpi=300)
     plt.show()
 
     # 图 2: 实时速率与时间分配占比曲线 (双 Y 轴)
@@ -206,7 +223,7 @@ def evaluate_and_plot_best_model():
     
     fig.legend(loc='upper right', bbox_to_anchor=(0.9, 0.9))
     plt.title('Real-time ISAC Rate & Time Allocation Ratio')
-    plt.savefig('Realtime_Rate_Rho_1.png', dpi=300)
+    plt.savefig(f'{result_path}Realtime_Rate_Rho.png', dpi=300)
     plt.show()
 
     # 图 3: 累计感知互信息量 (Cumulative MI)
@@ -218,7 +235,7 @@ def evaluate_and_plot_best_model():
     plt.title('Cumulative Sensing Mutual Information Over Time')
     plt.grid(True, linestyle='--', alpha=0.6)
     plt.legend()
-    plt.savefig('Cumulative_MI_1.png', dpi=300)
+    plt.savefig(f'{result_path}Cumulative_MI.png', dpi=300)
     plt.show()
 
     # 图 4: 角度解耦曲线 (机体偏航角 vs 天线相对转角 vs 目标方位)
@@ -237,14 +254,15 @@ def evaluate_and_plot_best_model():
     plt.title('Mechanical Decoupling: UAV Attitude vs. Antenna Rotation')
     plt.legend(loc='best')
     plt.grid(True, linestyle='--', alpha=0.6)
-    plt.savefig('Angle_Decoupling_1.png', dpi=300)
+    plt.savefig(f'{result_path}Angle_Decoupling.png', dpi=300)
     plt.show()
 
 if __name__ == '__main__':
+    PATH = './SAC_model/'
     print("====== 开始生成分析图表 ======")
     # 1. 绘制收敛图
-    plot_convergence()
+    plot_convergence(result_path=PATH)
     
     # 2. 加载最佳模型生成物理曲线
-    evaluate_and_plot_best_model()
+    evaluate_and_plot_best_model(result_path=PATH)
     print("====== 图表生成完毕，已保存为图片文件 ======")

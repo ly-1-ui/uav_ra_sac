@@ -12,104 +12,155 @@ import copy  # 深拷贝，用于对象复制
 
 # Target 类：表示运动的目标对象
 # 作用：模拟一个在二维平面上运动的目标，具有位置、速度和运动轨迹
-class Target(object):
-    # 初始化方法：设置目标的初始状态
-    # 参数：
-    #   position: 初始位置 [x, y]
-    def __init__(self, position):
-        self.position = copy.deepcopy(position)  # 当前位置 [x, y]，深拷贝避免引用问题
-        self.vx = -10  # x方向速度，初始向左移动
-        self.vy = 0  # y方向速度，初始无垂直运动
-        self.vx_min, self.vx_max = -20, 0  # x速度范围：-20到0（只能向左或不动）
-        self.vy_min, self.vy_max = -10, 10  # y速度范围：-10到10
-        self.r = 10  # 轨迹振幅参数
-        # 初始化y位置为正弦波轨迹：y = 3000 + r * sin(0.02 * x)
-        self.position[1] = 2700 + self.r * sin(0.02 * self.position[0])
-        self.init_position = self.position  # 保存初始位置用于重置
+# class Target(object):
+#     # 初始化方法：设置目标的初始状态
+#     # 参数：
+#     #   position: 初始位置 [x, y]
+#     def __init__(self, position):
+#         self.position = copy.deepcopy(position)  # 当前位置 [x, y]，深拷贝避免引用问题
+#         self.vx = -10  # x方向速度，初始向左移动
+#         self.vy = 0  # y方向速度，初始无垂直运动
+#         self.vx_min, self.vx_max = -20, 0  # x速度范围：-20到0（只能向左或不动）
+#         self.vy_min, self.vy_max = -10, 10  # y速度范围：-10到10
+#         self.r = 10  # 轨迹振幅参数
+#         # 初始化y位置为正弦波轨迹：y = 3000 + r * sin(0.02 * x)
+#         self.position[1] = 2700 + self.r * sin(0.02 * self.position[0])
+#         self.init_position = self.position  # 保存初始位置用于重置
 
-        # 计算速度范围的尺度，用于归一化
+#         # 计算速度范围的尺度，用于归一化
+#         self.vx_scale = self.vx_max - self.vx_min
+#         self.vy_scale = self.vy_max - self.vy_min
+
+
+
+
+#     # step 方法：更新目标位置（随机运动）
+#     # 参数：
+#     #   dt: 时间步长，默认1.0
+#     def step(self, dt=1.):
+#         # # 更新x速度：添加高斯噪声，标准差为2
+#         # self.vx = np.random.normal(self.vx, 2)
+#         # # 限制x速度：不能向右移动（vx > 0），最小为vx_min
+#         # if self.vx > 0:
+#         #     self.vx = 0
+#         # elif self.vx < self.vx_min:
+#         #     self.vx = self.vx_min  
+#         # # 更新x位置
+#         # self.position[0] += self.vx * dt
+
+#         # last_y = self.position[1]  # 保存上一时刻的y位置
+#         # # 计算轨迹边界：上边界和下边界
+#         # ru = 2410 + self.r * sin(0.02 * self.position[0])  # 上边界
+#         # rl = 2390 + self.r * sin(0.02 * self.position[0])  # 下边界
+#         # # 更新y位置：基于正弦轨迹 + 高斯噪声
+#         # self.position[1] = 2400 + self.r * sin(0.02 * self.position[0]) + np.random.normal(0, 0.5)*dt
+#         # # 限制y位置在边界内
+#         # if self.position[1] > ru:
+#         #     self.position[1] = ru
+#         # elif self.position[1] < rl:
+#         #     self.position[1] = rl
+
+#         # # 计算y方向速度
+#         # self.vy = (self.position[1] - last_y) / dt
+
+#         self.vx = -8
+#         self.vy = 0
+        
+#         self.position[0] += self.vx * dt
+#         self.position[1] += self.vy * dt
+
+#     # step_velocity 方法：使用指定速度更新目标位置
+#     # 参数：
+#     #   vx, vy: 指定的x和y方向速度
+#     #   dt: 时间步长，默认1.0
+#     def step_velocity(self, vx, vy, dt=1.):
+#         self.vx = vx
+#         # 限制x速度
+#         if self.vx > 0:
+#             self.vx = 0
+#         elif self.vx < self.vx_min:
+#             self.vx = self.vy_min  # 同样是笔误
+#         # 更新x位置
+#         self.position[0] += self.vx * dt
+
+#         last_y = self.position[1]
+#         # 计算轨迹边界
+#         ru = 3010 + self.r * sin(0.02 * self.position[0])
+#         rl = 2990 + self.r * sin(0.02 * self.position[0])
+#         # 更新y位置
+#         self.position[1] += vy*dt
+#         # 限制边界
+#         if self.position[1] > ru:
+#             self.position[1] = ru
+#         elif self.position[1] < rl:
+#             self.position[1] = rl
+
+#         # 计算y速度
+#         self.vy = (self.position[1] - last_y) / dt
+
+#     # reset 方法：重置目标到初始状态
+#     def reset(self):
+#         self.position = copy.deepcopy(self.init_position)
+#         self.vx = -8
+#         self.vy = 0
+
+#     # reset_init_position 方法：重置初始位置和速度
+#     # 参数：
+#     #   init_position: 新的初始位置
+#     #   velocity: 新的初始速度
+#     def reset_init_position(self, init_position, velocity):
+#         self.init_position = init_position
+#         self.position = copy.deepcopy(init_position)
+#         self.vx = velocity
+
+# Target 类：表示运动的目标对象
+# 作用：模拟一个在二维平面上运动的目标，当前设定为匀速直线运动
+class Target(object):
+    def __init__(self, position):
+        # 1. 忠实记录外部传入的坐标，绝不强制覆写
+        self.position = copy.deepcopy(position)  
+        self.init_position = copy.deepcopy(position)  
+        
+        # 2. 统一初始化直线运动的速度
+        self.vx = -10.0  
+        self.vy = 0.0  
+        
+        # 3. 保留归一化需要的物理极限（供神经网络观测空间使用）
+        self.vx_min, self.vx_max = -20.0, 0.0  
+        self.vy_min, self.vy_max = -10.0, 10.0  
+        
         self.vx_scale = self.vx_max - self.vx_min
         self.vy_scale = self.vy_max - self.vy_min
 
-
-
-
-    # step 方法：更新目标位置（随机运动）
-    # 参数：
-    #   dt: 时间步长，默认1.0
+    # step 方法：按设定速度自然运动
     def step(self, dt=1.):
-        # # 更新x速度：添加高斯噪声，标准差为2
-        # self.vx = np.random.normal(self.vx, 2)
-        # # 限制x速度：不能向右移动（vx > 0），最小为vx_min
-        # if self.vx > 0:
-        #     self.vx = 0
-        # elif self.vx < self.vx_min:
-        #     self.vx = self.vx_min  
-        # # 更新x位置
-        # self.position[0] += self.vx * dt
-
-        # last_y = self.position[1]  # 保存上一时刻的y位置
-        # # 计算轨迹边界：上边界和下边界
-        # ru = 2410 + self.r * sin(0.02 * self.position[0])  # 上边界
-        # rl = 2390 + self.r * sin(0.02 * self.position[0])  # 下边界
-        # # 更新y位置：基于正弦轨迹 + 高斯噪声
-        # self.position[1] = 2400 + self.r * sin(0.02 * self.position[0]) + np.random.normal(0, 0.5)*dt
-        # # 限制y位置在边界内
-        # if self.position[1] > ru:
-        #     self.position[1] = ru
-        # elif self.position[1] < rl:
-        #     self.position[1] = rl
-
-        # # 计算y方向速度
-        # self.vy = (self.position[1] - last_y) / dt
-
-        self.vx = -8
-        self.vy = 0
-        
+        # 极简纯粹的运动方程
         self.position[0] += self.vx * dt
         self.position[1] += self.vy * dt
 
-    # step_velocity 方法：使用指定速度更新目标位置
-    # 参数：
-    #   vx, vy: 指定的x和y方向速度
-    #   dt: 时间步长，默认1.0
+    # step_velocity 方法：外界强行改变速度时的更新逻辑
     def step_velocity(self, vx, vy, dt=1.):
         self.vx = vx
-        # 限制x速度
+        self.vy = vy
+        
+        # 仅对横向速度作合理的物理限制
         if self.vx > 0:
-            self.vx = 0
+            self.vx = 0.0
         elif self.vx < self.vx_min:
-            self.vx = self.vy_min  # 同样是笔误
-        # 更新x位置
+            self.vx = self.vx_min  
+            
         self.position[0] += self.vx * dt
+        self.position[1] += self.vy * dt
 
-        last_y = self.position[1]
-        # 计算轨迹边界
-        ru = 3010 + self.r * sin(0.02 * self.position[0])
-        rl = 2990 + self.r * sin(0.02 * self.position[0])
-        # 更新y位置
-        self.position[1] += vy*dt
-        # 限制边界
-        if self.position[1] > ru:
-            self.position[1] = ru
-        elif self.position[1] < rl:
-            self.position[1] = rl
-
-        # 计算y速度
-        self.vy = (self.position[1] - last_y) / dt
-
-    # reset 方法：重置目标到初始状态
+    # reset 方法：回合结束时重置状态
     def reset(self):
         self.position = copy.deepcopy(self.init_position)
-        self.vx = -10
-        self.vy = 0
+        self.vx = -8.0
+        self.vy = 0.0
 
-    # reset_init_position 方法：重置初始位置和速度
-    # 参数：
-    #   init_position: 新的初始位置
-    #   velocity: 新的初始速度
+    # reset_init_position 方法：运行中途彻底改变初始锚点
     def reset_init_position(self, init_position, velocity):
-        self.init_position = init_position
+        self.init_position = copy.deepcopy(init_position)
         self.position = copy.deepcopy(init_position)
         self.vx = velocity
 
@@ -441,9 +492,9 @@ class Environment(object):
             
             # 【重塑价值观】：大幅削弱剩余电量奖金，暴增感知累计奖金！
             # 让它明白：当个满电的快递员不值钱，带回海量的感知数据才是王者。
-            energy_bonus = self.uav.energy * 5.0         # 剩余电量奖金（倍率降到2）
+            energy_bonus = self.uav.energy * 2.0         # 剩余电量奖金（倍率降到2）
             sensing_bonus = self.uav.sensing_total * 30.0 # 感知总数据奖金（倍率飙到20）
-            reward_tmp = 1000.0 + energy_bonus + sensing_bonus
+            reward_tmp = 1000.0 + energy_bonus +sensing_bonus
             
         else:
             # 还在安全飞行中
@@ -476,17 +527,27 @@ class Environment(object):
         self.rewards_step['r_bound'] = reward_tmp  
         reward += reward_tmp  
 
-        # 检查通信底线 (注意这里的 0.5 要和 utils.py 里的 rho 门槛对齐)
-        if 0.5 * dt > self.uav.com_rate:
-            cost_tmp = (0.5 * dt - self.uav.com_rate) * 10.0 # 通信断连惩罚
-            reward_tmp = 0.  
-            commun_con = 1  
+        # 检查通信底线 (门槛2.0与utils.py的rho门槛对齐)
+        if 2.0 * dt > self.uav.com_rate:
+            cost_tmp = (2.0 * dt - self.uav.com_rate) * 10.0  # 通信断连惩罚
+            reward_tmp = 0.
+            commun_con = 1
         else:
-            cost_tmp = 0.  
-            reward_tmp = self.uav.sen_rate * 2.0  # 日常奖励实时感知速率
-        self.rewards_step['r_rate'] = reward_tmp  
-        self.rewards_step['c_rate'] = cost_tmp  
-        reward += reward_tmp  
+            cost_tmp = 0.
+            # 【核心修改】感知奖励必须乘以实时波束对准质量，没对准=没奖励
+            q0, q1, q2, q3 = self.uav.state[9:13]
+            theta_body = np.arctan2(2*(q0*q3 + q1*q2), 1 - 2*(q2**2 + q3**2))
+            theta_RA = theta_body + self.uav.state[14]
+            pos = self.uav.position
+            theta_s_now = np.arctan2(
+                self.target.position[1] - pos[1],
+                self.target.position[0] - pos[0])
+            align_quality = max(0, np.cos(theta_s_now - theta_RA))**2  # 硬截断对准质量[0,1]
+            reward_tmp = self.uav.sen_rate * 2.0 * align_quality  # 对准才有感知奖励
+            reward_tmp += align_quality * 3.0 * dt                # 额外对准鼓励
+        self.rewards_step['r_rate'] = reward_tmp
+        self.rewards_step['c_rate'] = cost_tmp
+        reward += reward_tmp
         cost += cost_tmp  
 
         # 检查天线机械限位 (超限受罚)
@@ -531,7 +592,7 @@ class Environment(object):
         
         # 施加平滑惩罚：机身扭动越剧烈，扣分越狠！
         # 这将完美凸显 RA-ULA (只需转天线，机身平稳) 相比 Fixed-ULA (机身疯狂扭动) 的降维打击优势！
-        r_smooth = -0.5 * angular_velocity_penalty
+        r_smooth = -4 * angular_velocity_penalty
         reward += r_smooth
 
         self.rewards_step['r_all'] = reward
